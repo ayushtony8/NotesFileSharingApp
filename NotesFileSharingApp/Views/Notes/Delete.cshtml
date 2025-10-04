@@ -1,0 +1,53 @@
+@model NotesFileSharingApp.DTOs.NoteDto
+@{
+    ViewData["Title"] = "Delete Note";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Delete Note
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Warning!</strong> This action cannot be undone. The note will be permanently deleted.
+                </div>
+
+                <h5>Are you sure you want to delete this note?</h5>
+                
+                <div class="bg-light p-3 rounded mt-3">
+                    <h6 class="fw-bold">@Model.Title</h6>
+                    <p class="mb-2">
+                        @if (Model.Content.Length > 150)
+                        {
+                            @Html.Raw(Model.Content.Substring(0, 150) + "...")
+                        }
+                        else
+                        {
+                            @Model.Content
+                        }
+                    </p>
+                    <small class="text-muted">
+                        <i class="bi bi-calendar"></i> Created: @Model.CreatedAt.ToShortDateString()
+                    </small>
+                </div>
+
+                <form asp-action="Delete" method="post" class="mt-4">
+                    <input asp-for="Id" type="hidden" />
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Note
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,117 @@
+@model NotesFileSharingApp.DTOs.CreateNoteDto
+@{
+    ViewData["Title"] = "Create Note";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-journal-plus"></i> Create New Note
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control form-control-lg" 
+                               placeholder="Enter a descriptive title for your note" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Content" class="form-label"></label>
+                        <textarea asp-for="Content" class="form-control" rows="12" 
+                                  placeholder="Write your note content here..."></textarea>
+                        <span asp-validation-for="Content" class="text-danger"></span>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> You can use this space to write anything - ideas, reminders, meeting notes, etc.
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Notes
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-outline-info me-2" onclick="clearForm()">
+                                <i class="bi bi-arrow-clockwise"></i> Clear
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> Create Note
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        function clearForm() {
+            if (confirm('Are you sure you want to clear the form? All content will be lost.')) {
+                document.getElementById('Title').value = '';
+                document.getElementById('Content').value = '';
+                document.getElementById('Title').focus();
+            }
+        }
+        
+        // Auto-save functionality (optional enhancement)
+        let autoSaveTimer;
+        const titleInput = document.getElementById('Title');
+        const contentTextarea = document.getElementById('Content');
+        
+        function showAutoSaveStatus(message) {
+            // You could implement a status indicator here
+            console.log('Auto-save: ' + message);
+        }
+        
+        function autoSave() {
+            const title = titleInput.value.trim();
+            const content = contentTextarea.value.trim();
+            
+            if (title || content) {
+                localStorage.setItem('draftNote', JSON.stringify({
+                    title: title,
+                    content: content,
+                    timestamp: new Date().toISOString()
+                }));
+                showAutoSaveStatus('Draft saved');
+            }
+        }
+        
+        function loadDraft() {
+            const draft = localStorage.getItem('draftNote');
+            if (draft) {
+                const draftData = JSON.parse(draft);
+                if (confirm('A draft from ' + new Date(draftData.timestamp).toLocaleString() + ' was found. Would you like to restore it?')) {
+                    titleInput.value = draftData.title;
+                    contentTextarea.value = draftData.content;
+                }
+            }
+        }
+        
+        // Load draft on page load
+        document.addEventListener('DOMContentLoaded', loadDraft);
+        
+        // Auto-save every 30 seconds
+        [titleInput, contentTextarea].forEach(element => {
+            element.addEventListener('input', () => {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(autoSave, 2000); // Save 2 seconds after user stops typing
+            });
+        });
+        
+        // Clear draft on successful submission
+        document.querySelector('form').addEventListener('submit', () => {
+            localStorage.removeItem('draftNote');
+        });
+    </script>
+}

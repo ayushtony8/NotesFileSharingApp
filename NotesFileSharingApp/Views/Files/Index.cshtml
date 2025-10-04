@@ -1,0 +1,160 @@
+@model IEnumerable<NotesFileSharingApp.DTOs.FileUploadDto>
+@{
+    ViewData["Title"] = "My Files";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-gradient"><i class="bi bi-file-earmark me-2"></i>My Files</h2>
+    <a asp-action="Upload" class="btn btn-success">
+        <i class="bi bi-upload me-2"></i>Upload New File
+    </a>
+</div>
+
+<!-- Clean Filter Section -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="btn-group" role="group" aria-label="File type filters">
+            <a asp-action="Index" class="btn @(string.IsNullOrEmpty(ViewBag.FileType) ? "btn-primary" : "btn-outline-primary")">
+                <i class="bi bi-files me-1"></i> All Files
+            </a>
+            <a asp-action="Index" asp-route-fileType="image" class="btn @(ViewBag.FileType == "image" ? "btn-primary" : "btn-outline-primary")">
+                <i class="bi bi-image me-1"></i> Images
+            </a>
+            <a asp-action="Index" asp-route-fileType="application" class="btn @(ViewBag.FileType == "application" ? "btn-primary" : "btn-outline-primary")">
+                <i class="bi bi-file-earmark-text me-1"></i> Documents
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(ViewBag.FileType))
+{
+    <div class="alert alert-info slide-up">
+        <i class="bi bi-info-circle me-2"></i> 
+        Showing files of type: <strong>@ViewBag.FileType</strong>
+        <a asp-action="Index" class="btn btn-sm btn-outline-primary ms-3">
+            <i class="bi bi-x me-1"></i>Clear Filter
+        </a>
+    </div>
+}
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var file in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 hover-lift @(file.IsShared ? "border-info" : "")">
+                    @if (file.IsShared)
+                    {
+                        <div class="card-header bg-info text-white py-2">
+                            <small><i class="bi bi-share me-1"></i> Shared File</small>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <h6 class="card-title d-flex align-items-center">
+                            @{
+                                string iconClass = "bi-file-earmark";
+                                string iconColor = "text-secondary";
+                                var fileName = file.FileName.ToLowerInvariant();
+                                if (fileName.EndsWith(".pdf"))
+                                {
+                                    iconClass = "bi-file-earmark-pdf";
+                                    iconColor = "text-danger";
+                                }
+                                else if (fileName.EndsWith(".doc") || fileName.EndsWith(".docx"))
+                                {
+                                    iconClass = "bi-file-earmark-word";
+                                    iconColor = "text-primary";
+                                }
+                                else if (fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png") || fileName.EndsWith(".gif"))
+                                {
+                                    iconClass = "bi-file-earmark-image";
+                                    iconColor = "text-info";
+                                }
+                                else if (fileName.EndsWith(".txt"))
+                                {
+                                    iconClass = "bi-file-earmark-text";
+                                    iconColor = "text-secondary";
+                                }
+                            }
+                            <i class="bi @iconClass @iconColor me-2"></i>
+                            <span class="text-truncate">@file.FileName</span>
+                        </h6>
+                        <div class="card-text">
+                            <div class="row g-2 text-muted">
+                                <div class="col-6">
+                                    <small>
+                                        <i class="bi bi-tag me-1"></i>
+                                        @file.FileType.Split('/').LastOrDefault()?.ToUpper()
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small>
+                                        <i class="bi bi-hdd me-1"></i>
+                                        @(Math.Round((double)file.FileSize / 1024, 1)) KB
+                                    </small>
+                                </div>
+                                <div class="col-12">
+                                    <small>
+                                        <i class="bi bi-calendar me-1"></i>
+                                        Uploaded @file.UploadedAt.ToString("MMM dd, yyyy")
+                                    </small>
+                                </div>
+                                @if (!file.IsShared)
+                                {
+                                    <div class="col-12">
+                                        <small>
+                                            <i class="bi bi-person me-1"></i>
+                                            @file.UserName
+                                        </small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex gap-2">
+                            <a asp-action="Download" asp-route-id="@file.Id" class="btn btn-success btn-sm flex-fill">
+                                <i class="bi bi-download me-1"></i> Download
+                            </a>
+                            @if (!file.IsShared)
+                            {
+                                <a asp-action="Share" asp-route-id="@file.Id" class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-share"></i>
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@file.Id" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-file-earmark-x display-1 text-muted"></i>
+        </div>
+        <h4 class="text-muted mb-3">No files found</h4>
+        @if (!string.IsNullOrEmpty(ViewBag.FileType))
+        {
+            <p class="text-muted mb-4">
+                No files of this type found. 
+                <a asp-action="Index" class="text-decoration-none">View all files</a> 
+                or try a different filter.
+            </p>
+        }
+        else
+        {
+            <p class="text-muted mb-4">Start by uploading your first file!</p>
+        }
+        <a asp-action="Upload" class="btn btn-success">
+            <i class="bi bi-upload me-2"></i>Upload Your First File
+        </a>
+    </div>
+}

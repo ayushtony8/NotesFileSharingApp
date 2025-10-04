@@ -1,0 +1,161 @@
+@model NotesFileSharingApp.DTOs.UploadFileDto
+@{
+    ViewData["Title"] = "Upload File";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-cloud-upload"></i> Upload File
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Upload" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    
+                    <div class="mb-4">
+                        <label asp-for="File" class="form-label">Select File</label>
+                        <input asp-for="File" type="file" class="form-control form-control-lg" 
+                               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif" />
+                        <span asp-validation-for="File" class="text-danger"></span>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> 
+                            Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, GIF. Maximum size: 10MB.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label">Description (Optional)</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" 
+                                  placeholder="Add a description for this file..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-shield-check"></i> Upload Guidelines:</h6>
+                        <ul class="mb-0">
+                            <li>Files are stored securely on our servers</li>
+                            <li>Only you can access your files unless you share them</li>
+                            <li>You can share files with other registered users</li>
+                            <li>File names should not contain special characters</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Files
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-outline-info me-2" onclick="clearForm()">
+                                <i class="bi bi-arrow-clockwise"></i> Clear
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-cloud-upload"></i> Upload File
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Upload Progress (Hidden by default) -->
+        <div id="uploadProgress" class="card mt-3" style="display: none;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div>
+                        <strong>Uploading file...</strong>
+                        <div class="progress mt-2" style="width: 300px;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        function clearForm() {
+            if (confirm('Are you sure you want to clear the form?')) {
+                document.getElementById('File').value = '';
+                document.getElementById('Description').value = '';
+                updateFileInfo();
+            }
+        }
+        
+        // File input change handler
+        document.getElementById('File').addEventListener('change', updateFileInfo);
+        
+        function updateFileInfo() {
+            const fileInput = document.getElementById('File');
+            const file = fileInput.files[0];
+            
+            // Remove existing file info
+            const existingInfo = document.getElementById('fileInfo');
+            if (existingInfo) {
+                existingInfo.remove();
+            }
+            
+            if (file) {
+                // Create file info display
+                const fileInfo = document.createElement('div');
+                fileInfo.id = 'fileInfo';
+                fileInfo.className = 'mt-2 p-3 bg-light rounded';
+                
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                const isLarge = file.size > 10 * 1024 * 1024; // 10MB
+                
+                fileInfo.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${file.name}</strong><br>
+                            <small class="text-muted">
+                                Type: ${file.type || 'Unknown'} • 
+                                Size: ${fileSize} MB
+                                ${isLarge ? '<span class="text-danger">• Too large!</span>' : ''}
+                            </small>
+                        </div>
+                        <i class="bi bi-file-earmark-check fs-3 text-success"></i>
+                    </div>
+                `;
+                
+                // Insert after the file input
+                fileInput.parentNode.insertBefore(fileInfo, fileInput.nextSibling);
+                
+                // Show warning for large files
+                if (isLarge) {
+                    fileInfo.classList.add('border', 'border-danger');
+                }
+            }
+        }
+        
+        // Form submission handler for progress
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('File');
+            if (fileInput.files.length > 0) {
+                // Show progress bar
+                document.getElementById('uploadProgress').style.display = 'block';
+                
+                // Simulate progress (in a real app, you'd track actual upload progress)
+                let progress = 0;
+                const progressBar = document.getElementById('progressBar');
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90; // Don't complete until actual upload finishes
+                    progressBar.style.width = progress + '%';
+                }, 200);
+                
+                // Clean up on page unload
+                window.addEventListener('beforeunload', () => clearInterval(interval));
+            }
+        });
+    </script>
+}
